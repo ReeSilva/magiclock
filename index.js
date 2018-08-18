@@ -6,20 +6,30 @@ const device = awsIot.device({
   certPath: './certs/MagicLock.cert.pem',
   caPath: './certs/root-CA.crt',
   clientId: 'MagicLockInitial',
-  host: 'a3vhfiz04xq9n9.iot.us-east-1.amazonaws.com'
+  host: 'aj5n8a300b2x9.iot.us-east-1.amazonaws.com',
+  keepalive: 120
 });
 
+console.log('comecei');
+
 device.on('connect', () => {
+  console.log('conectei');
   device.subscribe('magiclock/open');
+  console.log('me inscrevi');
   device.publish('magiclock/thing', JSON.stringify({ status: 'I\'m alive' }));
 });
 
 device.on('message', (topic, payload) => {
   const lock = new Gpio(4, 'out');
-  if (payload.magic === 'open') {
+  const message = JSON.parse(payload.toString());
+  console.log(message);
+  if (message.magic === 'open') {
     console.log('ok, i\'ll open your lock');
+    lock.writeSync(1);
     setTimeout(() => {
-      lock.writeSync(1);
+      console.log('desligando');
+      lock.writeSync(0);
+      console.log('unexport');
       lock.unexport();
     }, 500);
   }
